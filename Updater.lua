@@ -3,13 +3,13 @@ local GITHUB_USER = "JackT1009"
 local GITHUB_REPO = "Minecolony-AE2-Integration-code"
 local GITHUB_BRANCH = "ColonyBrain-Test-Branch"
 local MAX_RETRIES = 3
-local UPDATER_NAME = "Updater.lua" -- .lua extension
 
+-- STRICT FILENAME VALIDATION
 local files = {
-    "startup.lua",                -- .lua not ,lua
-    "modules/colony.lua",         -- Correct colony.lua
-    "modules/display.lua",        -- Correct display.lua
-    UPDATER_NAME
+    "startup.lua",          -- .lua NOT ,lua
+    "modules/colony.lua",   -- .lua extension
+    "modules/display.lua",  -- .lua extension
+    "Updater.lua"           -- .lua extension
 }
 
 local function downloadFile(path)
@@ -29,16 +29,16 @@ local function downloadFile(path)
     return false
 end
 
--- Self-update with proper extension
+-- SELF-UPDATE WITH VALIDATION
 local function updateSelf()
     print("Checking for updater updates...")
-    if downloadFile(UPDATER_NAME..".new") then  -- .new not .neu
+    if downloadFile("Updater.lua.new") then  -- .lua.new
         local bat = fs.open("update.bat", "w")
-        bat.write([[ 
-            cp ]]..UPDATER_NAME..[[.new ]]..UPDATER_NAME..[[ 
-            rm ]]..UPDATER_NAME..[[.new 
-            rm update.bat 
-            ]]..UPDATER_NAME..[[ 
+        bat.write([[
+            cp Updater.lua.new Updater.lua
+            rm Updater.lua.new
+            rm update.bat
+            Updater
         ]])
         bat.close()
         return true
@@ -46,37 +46,36 @@ local function updateSelf()
     return false
 end
 
--- Main execution
+-- MAIN EXECUTION
+print("=== Minecolony Updater ===")
 local needsReboot = updateSelf()
 
-print("Starting main update...")
 fs.delete("startup.lua")
 if fs.exists("modules") then fs.delete("modules") end
 fs.makeDir("modules")
 
 local success = true
 for _, path in ipairs(files) do
-    local targetPath = path
-    if path == UPDATER_NAME then
-        targetPath = path..".new"  -- Temp file for self-update
-    end
-    
     print("Downloading "..path)
-    if not downloadFile(targetPath) then
-        print("X Failed: "..path)
+    if not downloadFile(path) then
+        print("X FAILED: "..path)
+        print("Verify file exists at:")
+        print("https://raw.githubusercontent.com/"..
+            GITHUB_USER.."/"..GITHUB_REPO.."/"..
+            GITHUB_BRANCH.."/"..path)
         success = false
     end
 end
 
 if success then
-    print("/ Update complete!")
+    print("/ SUCCESS! System updated")
     if needsReboot then
         print("Restarting updater...")
-        sleep(2)
+        sleep(3)
         shell.run("update.bat")
     else
         print("Run 'startup' to launch")
     end
 else
-    print("X Partial update - check errors above")
+    print("X CRITICAL ERRORS - Manual fix required")
 end
