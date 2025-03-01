@@ -10,7 +10,7 @@ local InventoryChecker = require("modules/inventory_checker")
 
 -- Initialize Systems
 local inventoryCheck = InventoryChecker.new(bridge)
-Display.initialize(mon)
+Display.mon = mon  -- Critical fix here
 
 -- Main Loop
 while true do
