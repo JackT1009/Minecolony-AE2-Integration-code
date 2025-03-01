@@ -1,10 +1,9 @@
-local colony = {}
-local integrator = peripheral.find("colonyIntegrator")
+local Colony = {}
+Colony.__index = Colony
 
-function colony.getRequests()
-    if not integrator then
-        error("Colony Integrator not found!")
-    end
+function Colony.getRequests()
+    local integrator = peripheral.find("colonyIntegrator")
+    if not integrator then return {} end
     
     local rawRequests = integrator.getRequests() or {}
     local processed = {}
@@ -21,4 +20,4 @@ function colony.getRequests()
     return processed
 end
 
-return colony
+return Colony
