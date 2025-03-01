@@ -1,24 +1,45 @@
-local display = {}
-local mon = peripheral.find("monitor") or term.current()
+local Display = {}
+Display.__index = Display
 
-function display.showRequests(requests)
-    mon.clear()
-    mon.setCursorPos(1,1)
-    mon.write("Colony Requests:")
-    
-    if #requests == 0 then
-        mon.setCursorPos(1,3)
-        mon.write("No current requests")
-        return
-    end
-    
-    for i, req in ipairs(requests) do
-        mon.setCursorPos(1, i+2)
-        mon.write(string.format("%-20s x%d", 
-            req.name:gsub("minecraft:", ""),
-            req.count
-        ))
+function Display.initialize(monitor)
+    Display.mon = monitor
+    if Display.mon then
+        Display.mon.setTextScale(0.5)
+        Display.mon.setBackgroundColor(colors.black)
     end
 end
 
-return display
+function Display.showStatuses(statuses)
+    if not Display.mon then return end
+    
+    Display.mon.clear()
+    Display.mon.setCursorPos(1,1)
+    Display.mon.setTextColor(colors.blue)
+    Display.mon.write("Colony Inventory Status")
+    
+    local line = 3
+    for _, item in ipairs(statuses) do
+        Display.mon.setCursorPos(1, line)
+        Display.mon.setTextColor(colors.white)
+        Display.mon.write(item.name:gsub("minecraft:", ""):sub(1,15))
+        
+        Display.mon.setCursorPos(18, line)
+        if item.status == "/" then
+            Display.mon.setTextColor(colors.green)
+        elseif item.status == "P" then
+            Display.mon.setTextColor(colors.yellow)
+        else
+            Display.mon.setTextColor(colors.red)
+        end
+        Display.mon.write(item.status.." x"..item.count)
+        
+        line = line + 1
+    end
+    
+    -- Legend
+    Display.mon.setTextColor(colors.white)
+    Display.mon.setCursorPos(1, Display.mon.getSize())
+    Display.mon.write("/=Stocked | P=Need Pattern | X=Error")
+end
+
+return Display
