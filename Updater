@@ -1,39 +1,85 @@
-local GITHUB_REPO = "https://raw.githubusercontent.com/JackT1009/Minecolony-AE2-Integration-code/ColonyBrain-Test-Branch/"
-
-local files = {
-    "startup.lua",
-    "modules/colony.lua",
-    "modules/display.lua",
-    -- Add other files from your branch here
+-- Updater.lua
+local tArgs = {...}
+local defs = {
+    {name="username", message="Github Username:", setting="GH_USER"},
+    {name="repo", message="Repository:", setting="GH_REPO"},
+    {name="branch", message="Branch:", setting="GH_BRANCH"}
 }
+local config = {}
 
-function updateFiles()
-    print("Updating from ColonyBrain-Test-Branch...")
-    
-    -- Delete existing files
-    fs.delete("startup.lua")
-    if fs.exists("modules") then
-        fs.delete("modules")
+term.clear()
+for i, def in ipairs(defs) do
+    config[def.name] = tArgs[i] or settings.get(def.setting)
+    if not config[def.name] then
+        term.setCursorPos(1, 1)
+        term.write(def.message)
+        config[def.name] = read()
+        settings.set(def.setting, config[def.name])
+        term.clear()
     end
-    fs.makeDir("modules")
-    
-    -- Download files
-    for _, path in ipairs(files) do
-        local url = GITHUB_REPO..path
-        local response = http.get(url)
-        
-        if response then
-            local f = fs.open(path, "w")
-            f.write(response.readAll())
-            f.close()
-            print("✓ "..path)
-        else
-            print("✗ Failed: "..path)
-        end
-        sleep(0.5)
-    end
-    
-    print("Update complete! Run 'startup' to launch")
 end
 
-updateFiles()
+local apiurl = "https://api.github.com/repos/"..config.username.."/"..config.repo.."/branches/"..config.branch
+local githubPath = "https://raw.githubusercontent.com/"..config.username.."/"..config.repo.."/"..config.branch
+
+local function getJSON(url)
+    local response = http.get(url)
+    return response and textutils.unserializeJSON(response.readAll())
+end
+
+local base = getJSON(apiurl)
+if not base.commit then error(base.message) end
+
+local WIDTH = term.getSize()
+term.setTextColor(colors.white)
+term.setCursorPos(1,1)
+term.write("Building file list...")
+
+local function buildFiles(url)
+    local tree = getJSON(url).tree
+    local files = {}
+    for _, item in ipairs(tree) do
+        if item.type == "tree" then
+            files[item.path] = buildFiles(item.url)
+        else
+            files[#files+1] = item.path
+        end
+    end
+    return files
+end
+
+local files = buildFiles(base.commit.commit.tree.url)
+
+-- New: Delete existing files before download
+term.setCursorPos(1,2)
+term.write("Cleaning old files...")
+local function deleteOldFiles(fileList)
+    for _, path in ipairs(fileList) do
+        if fs.exists(path) then
+            fs.delete(path)
+            sleep(0.1)
+        end
+    end
+    for dir in pairs(files) do  -- Delete directories
+        if fs.exists(dir) then
+            fs.delete(dir, true)  -- Recursive delete
+        end
+    end
+end
+deleteOldFiles(files)
+
+term.clear()
+term.setCursorPos(1,1)
+term.write("Downloading updates...")
+
+local total = #files
+local downloaded = 0
+for _, file in ipairs(files) do
+    term.setCursorPos(1,2)
+    term.clearLine()
+    term.write(("%d/%d: %s"):format(downloaded, total, file))
+    shell.run("wget", githubPath.."/"..file, file)
+    downloaded = downloaded + 1
+end
+
+print("Update complete! Run 'startup' to launch")
