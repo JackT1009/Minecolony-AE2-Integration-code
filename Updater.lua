@@ -1,10 +1,16 @@
-
 -- Updater.lua
 local GITHUB_USER = "JackT1009"
 local GITHUB_REPO = "Minecolony-AE2-Integration-code"
 local GITHUB_BRANCH = "ColonyBrain-Test-Branch"
 local MAX_RETRIES = 3
-local UPDATER_NAME = "Updater.lua"
+local UPDATER_NAME = "Updater.lua" -- .lua extension
+
+local files = {
+    "startup.lua",                -- .lua not ,lua
+    "modules/colony.lua",         -- Correct colony.lua
+    "modules/display.lua",        -- Correct display.lua
+    UPDATER_NAME
+}
 
 local function downloadFile(path)
     local url = "https://raw.githubusercontent.com/"..
@@ -23,17 +29,16 @@ local function downloadFile(path)
     return false
 end
 
--- Self-update mechanism
+-- Self-update with proper extension
 local function updateSelf()
     print("Checking for updater updates...")
-    if downloadFile(UPDATER_NAME..".new") then
-        -- Create update script
+    if downloadFile(UPDATER_NAME..".new") then  -- .new not .neu
         local bat = fs.open("update.bat", "w")
-        bat.write([[
-            copy ]]..UPDATER_NAME..[[.new ]]..UPDATER_NAME..[[
-            delete ]]..UPDATER_NAME..[[.new
-            delete update.bat
-            ]]..UPDATER_NAME..[[
+        bat.write([[ 
+            cp ]]..UPDATER_NAME..[[.new ]]..UPDATER_NAME..[[ 
+            rm ]]..UPDATER_NAME..[[.new 
+            rm update.bat 
+            ]]..UPDATER_NAME..[[ 
         ]])
         bat.close()
         return true
@@ -41,14 +46,8 @@ local function updateSelf()
     return false
 end
 
--- Main
+-- Main execution
 local needsReboot = updateSelf()
-local files = {
-    "startup.lua",
-    "modules/colony.lua",
-    "modules/display.lua",
-    UPDATER_NAME
-}
 
 print("Starting main update...")
 fs.delete("startup.lua")
@@ -57,9 +56,13 @@ fs.makeDir("modules")
 
 local success = true
 for _, path in ipairs(files) do
-    if path == UPDATER_NAME then path = path..".new" end  -- Temp file
+    local targetPath = path
+    if path == UPDATER_NAME then
+        targetPath = path..".new"  -- Temp file for self-update
+    end
+    
     print("Downloading "..path)
-    if not downloadFile(path) then
+    if not downloadFile(targetPath) then
         print("X Failed: "..path)
         success = false
     end
