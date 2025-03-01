@@ -1,16 +1,13 @@
-
--- Updater.lua
 local GITHUB_USER = "JackT1009"
 local GITHUB_REPO = "Minecolony-AE2-Integration-code"
 local GITHUB_BRANCH = "ColonyBrain-Test-Branch"
 local MAX_RETRIES = 3
 
--- STRICT FILENAME VALIDATION
 local files = {
-    "startup.lua",          -- .lua NOT ,lua
-    "modules/colony.lua",   -- .lua extension
-    "modules/display.lua",  -- .lua extension
-    "Updater.lua"           -- .lua extension
+    "ColonyBrain/startup.lua",
+    "ColonyBrain/modules/colony.lua",
+    "ColonyBrain/modules/display.lua",
+    "ColonyBrain/Updater.lua"  -- Self-update
 }
 
 local function downloadFile(path)
@@ -30,12 +27,12 @@ local function downloadFile(path)
     return false
 end
 
--- SELF-UPDATE WITH VALIDATION
 local function updateSelf()
-    print("Checking for updater updates...")
-    if downloadFile("Updater.lua.new") then  -- .lua.new
-        local bat = fs.open("update.bat", "w")
+    print("Updating updater...")
+    if downloadFile("ColonyBrain/Updater.lua.new") then
+        local bat = fs.open("ColonyBrain/update.bat", "w")
         bat.write([[
+            cd ColonyBrain
             cp Updater.lua.new Updater.lua
             rm Updater.lua.new
             rm update.bat
@@ -47,36 +44,35 @@ local function updateSelf()
     return false
 end
 
--- MAIN EXECUTION
-print("=== Minecolony Updater ===")
+-- Main
+print("=== ColonyBrain System Updater ===")
 local needsReboot = updateSelf()
 
-fs.delete("startup.lua")
-if fs.exists("modules") then fs.delete("modules") end
-fs.makeDir("modules")
+-- Clean install
+if fs.exists("ColonyBrain") then
+    fs.delete("ColonyBrain")
+end
+fs.makeDir("ColonyBrain")
+fs.makeDir("ColonyBrain/modules")
 
 local success = true
 for _, path in ipairs(files) do
     print("Downloading "..path)
     if not downloadFile(path) then
-        print("X FAILED: "..path)
-        print("Verify file exists at:")
-        print("https://raw.githubusercontent.com/"..
-            GITHUB_USER.."/"..GITHUB_REPO.."/"..
-            GITHUB_BRANCH.."/"..path)
+        print("X Failed: "..path)
         success = false
     end
 end
 
 if success then
-    print("/ SUCCESS! System updated")
+    print("/ Update complete! Run:")
+    print("cd ColonyBrain")
+    print("startup")
     if needsReboot then
-        print("Restarting updater...")
+        print("Restarting...")
         sleep(3)
-        shell.run("update.bat")
-    else
-        print("Run 'startup' to launch")
+        shell.run("ColonyBrain/update.bat")
     end
 else
-    print("X CRITICAL ERRORS - Manual fix required")
+    print("X Critical errors - manual fix needed")
 end
