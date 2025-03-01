@@ -1,14 +1,3 @@
-local Display = {}
-Display.__index = Display
-
-function Display.initialize(monitor)
-    Display.mon = monitor
-    if Display.mon then
-        Display.mon.setTextScale(0.5)
-        Display.mon.setBackgroundColor(colors.black)
-    end
-end
-
 function Display.showStatuses(statuses)
     if not Display.mon then return end
     
@@ -23,15 +12,24 @@ function Display.showStatuses(statuses)
         Display.mon.setTextColor(colors.white)
         Display.mon.write(item.name:gsub("minecraft:", ""):sub(1,15))
         
-        Display.mon.setCursorPos(18, line)
+        -- Status and counts
+        local statusText
         if item.status == "/" then
             Display.mon.setTextColor(colors.green)
+            statusText = string.format("%d/%d %s", 
+                item.available, item.needed, item.status)
         elseif item.status == "P" then
             Display.mon.setTextColor(colors.yellow)
+            statusText = string.format("%d/%d %s", 
+                item.available, item.needed, item.status)
         else
             Display.mon.setTextColor(colors.red)
+            statusText = string.format("%d/%d %s", 
+                item.available, item.needed, item.status)
         end
-        Display.mon.write(item.status.." x"..item.count)
+        
+        Display.mon.setCursorPos(18, line)
+        Display.mon.write(statusText)
         
         line = line + 1
     end
@@ -39,7 +37,5 @@ function Display.showStatuses(statuses)
     -- Legend
     Display.mon.setTextColor(colors.white)
     Display.mon.setCursorPos(1, Display.mon.getSize())
-    Display.mon.write("/=Stocked | P=Need Pattern | X=Error")
+    Display.mon.write("/=Stocked | P=Pattern Needed | X=Error")
 end
-
-return Display
