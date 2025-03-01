@@ -1,15 +1,14 @@
-
--- Updater.lua (Place this in root directory)
+-- Updater.lua
 local GITHUB_USER = "JackT1009"
 local GITHUB_REPO = "Minecolony-AE2-Integration-code"
 local GITHUB_BRANCH = "ColonyBrain-Test-Branch"
 local MAX_RETRIES = 3
 
--- Files now in repo root (no ColonyBrain folder on GitHub)
 local files = {
     "startup.lua",
     "modules/colony.lua",
     "modules/display.lua",
+    "modules/inventory_checker.lua",  -- New module
     "Updater.lua"
 }
 
@@ -20,7 +19,6 @@ local function downloadFile(path)
     for i = 1, MAX_RETRIES do
         local response = http.get(url)
         if response then
-            -- Install to ColonyBrain folder locally
             local localPath = "ColonyBrain/"..path
             local dir = string.match(localPath, "(.+)/[^/]+$") or ""
             if not fs.exists(dir) then fs.makeDir(dir) end
@@ -36,7 +34,7 @@ local function downloadFile(path)
 end
 
 print("=== ColonyBrain Installer ===")
-fs.delete("ColonyBrain") -- Clean existing install
+fs.delete("ColonyBrain")
 fs.makeDir("ColonyBrain/modules")
 
 local success = true
