@@ -1,0 +1,39 @@
+local GITHUB_REPO = "https://raw.githubusercontent.com/JackT1009/Minecolony-AE2-Integration-code/ColonyBrain-Test-Branch/"
+
+local files = {
+    "startup.lua",
+    "modules/colony.lua",
+    "modules/display.lua",
+    -- Add other files from your branch here
+}
+
+function updateFiles()
+    print("Updating from ColonyBrain-Test-Branch...")
+    
+    -- Delete existing files
+    fs.delete("startup.lua")
+    if fs.exists("modules") then
+        fs.delete("modules")
+    end
+    fs.makeDir("modules")
+    
+    -- Download files
+    for _, path in ipairs(files) do
+        local url = GITHUB_REPO..path
+        local response = http.get(url)
+        
+        if response then
+            local f = fs.open(path, "w")
+            f.write(response.readAll())
+            f.close()
+            print("✓ "..path)
+        else
+            print("✗ Failed: "..path)
+        end
+        sleep(0.5)
+    end
+    
+    print("Update complete! Run 'startup' to launch")
+end
+
+updateFiles()
