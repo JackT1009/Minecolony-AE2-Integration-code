@@ -1,4 +1,3 @@
--- modules/display.lua
 Display = Display or {}
 
 function Display.showStatuses(statuses)
@@ -20,8 +19,11 @@ function Display.showStatuses(statuses)
         if item.status == "/" then
             Display.mon.setTextColor(colors.green)
             statusText = string.format("%d/%d %s", item.available, item.needed, item.status)
-        elseif item.status == "P" then
+        elseif item.status == "M" then
             Display.mon.setTextColor(colors.yellow)
+            statusText = string.format("%d/%d %s", item.available, item.needed, item.status)
+        elseif item.status == "P" then
+            Display.mon.setTextColor(colors.orange)
             statusText = string.format("%d/%d %s", item.available, item.needed, item.status)
         else
             Display.mon.setTextColor(colors.red)
@@ -33,10 +35,10 @@ function Display.showStatuses(statuses)
         line = line + 1
     end
     
-    -- Legend
+    -- Updated legend
     Display.mon.setTextColor(colors.white)
     Display.mon.setCursorPos(1, Display.mon.getSize())
-    Display.mon.write("Avail/Need | /=Stocked | P=Pattern | X=Error")
+    Display.mon.write("/=Stocked | M=Partial | P=No Pattern | X=Error")
 end
 
-return Display -- Critical line!
+return Display
