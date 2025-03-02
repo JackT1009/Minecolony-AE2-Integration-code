@@ -39,4 +39,4 @@ function Display.showStatuses(statuses)
     Display.mon.write("Avail/Need | /=Stocked | P=Pattern | X=Error")
 end
 
-return Display  -- Critical line
+return Display -- Critical line!
