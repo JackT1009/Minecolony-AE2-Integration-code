@@ -10,11 +10,12 @@ function Colony.getRequests()
     
     for _, req in pairs(rawRequests) do
         if req.items and req.items[1] then
-            -- Debug: Print raw item name
-            print("Raw item name:", req.items[1].name)
+            -- Clean item names
+            local rawName = req.items[1].name
+            local cleanName = string.lower(string.match(rawName, "([^:]+:[^:]+)"))
             
             table.insert(processed, {
-                name = req.items[1].name,
+                name = cleanName,
                 count = req.count
             })
         end
