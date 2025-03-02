@@ -1,13 +1,12 @@
-local config = require("config")
-local bridge = peripheral.find("meBridge")
-local monitor = peripheral.find("monitor")
-
-local InventoryManager = require("modules/inventory_manager")
-local DisplayController = require("modules/display_controller")
-local TaskScheduler = require("modules/task_scheduler")
-local Colony = require("modules/colony")
+local config = require("modules.config")
+local InventoryManager = require("modules.inventory_manager")
+local DisplayController = require("modules.display_controller")
+local TaskScheduler = require("modules.task_scheduler")
+local Colony = require("modules.colony")
 
 -- Initialize systems
+local bridge = peripheral.find("meBridge")
+local monitor = peripheral.find("monitor") or peripheral.wrap("top")
 local inv_mgr = InventoryManager.new(bridge)
 DisplayController.initialize(monitor)
 
@@ -18,12 +17,12 @@ while true do
     local requests = Colony.getRequests()
     local statuses = {}
     
-    -- Batch process requests
+    -- Process requests
     for _, req in ipairs(requests) do
         table.insert(statuses, inv_mgr:get_status(req.name, req.count))
     end
 
-    -- Auto-export tasks
+    -- Schedule exports
     for _, s in ipairs(statuses) do
         if s.status == "/" then
             TaskScheduler.add({
@@ -41,7 +40,7 @@ while true do
         math.max(config.REFRESH_INTERVAL - elapsed, 1)
     )
 
-    -- Rate-limited task execution
+    -- Run scheduled tasks
     TaskScheduler.run()
     sleep(math.max(config.REFRESH_INTERVAL - elapsed, 0.1))
 end
