@@ -4,44 +4,51 @@ InventoryChecker.__index = InventoryChecker
 function InventoryChecker.new(bridge)
     local self = setmetatable({}, InventoryChecker)
     self.bridge = bridge
+    self.debugLog = {}
     return self
 end
 
+function InventoryChecker:logDebug(message)
+    table.insert(self.debugLog, message)
+end
+
 function InventoryChecker:getItemStatus(item, amount)
+    self.debugLog = {}
     if not self.bridge then return "X", 0 end
     
-    -- Get ALL items and filter manually
+    -- Debug: Item being checked
+    self:logDebug("Checking: "..item)
+    
     local total = 0
     local allItems = self.bridge.listItems() or {}
     
     for _, stack in pairs(allItems) do
-        -- Exact name match (case-sensitive)
         if stack.name == item then
-            total = total + (stack.count or 0)
+            local count = tonumber(stack.count) or 0
+            total = total + count
+            self:logDebug("- Found: "..count.."x "..stack.name)
+        end
+    end
+    
+    -- Debug: Total found
+    self:logDebug("Total: "..total.." / Needed: "..amount)
+    
+    -- Status logic
+    local hasPattern = false
+    local craftables = self.bridge.listCraftables() or {}
+    for _, craftable in pairs(craftables) do
+        if craftable.name == item then
+            hasPattern = true
+            break
         end
     end
 
-    -- Debugging (remove after testing)
-    print("Item:", item, "Total:", total, "Needed:", amount)
-
     if total >= amount then
         return "/", total
+    elseif hasPattern then
+        return "M", total
     else
-        -- Check for crafting pattern
-        local hasPattern = false
-        local craftables = self.bridge.listCraftables() or {}
-        for _, craftable in pairs(craftables) do
-            if craftable.name == item then
-                hasPattern = true
-                break
-            end
-        end
-
-        if hasPattern then
-            return "M", total
-        else
-            return "P", total
-        end
+        return "P", total
     end
 end
 
@@ -57,6 +64,10 @@ function InventoryChecker:getAllStatuses(requests)
         }
     end
     return statuses
+end
+
+function InventoryChecker:getDebugLog()
+    return self.debugLog
 end
 
 return InventoryChecker
