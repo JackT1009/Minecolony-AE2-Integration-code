@@ -14,33 +14,37 @@ DisplayController.initialize(monitor)
 while true do
     local cycle_start = os.epoch("utc")
     local debug_info = {}
-    local requests = Colony.getRequests()
     local statuses = {}
     
-    -- Process requests
+    -- Phase 1: Get requests
+    local requests = Colony.getRequests()
+    
+    -- Phase 2: Process statuses
     for _, req in ipairs(requests) do
         table.insert(statuses, inv_mgr:get_status(req.name, req.count))
     end
 
-    -- Schedule exports
+    -- Phase 3: Schedule exports
     for _, s in ipairs(statuses) do
         if s.status == "/" then
             TaskScheduler.add({
-                fn = bridge.exportItem,
-                args = {{name = s.name, count = s.needed}, config.WAREHOUSE_DIRECTION}
+                fn = function()
+                    return pcall(bridge.exportItem, {name=s.name, count=s.needed}, config.WAREHOUSE_DIRECTION)
+                end,
+                desc = ("Export %dx %s"):format(s.needed, s.name)
             })
         end
     end
 
-    -- Update display
+    -- Phase 4: Update display
     local elapsed = (os.epoch("utc") - cycle_start) / 1000
-    DisplayController.update(
-        statuses,
-        debug_info,
-        math.max(config.REFRESH_INTERVAL - elapsed, 1)
-    )
+    local time_left = math.max(config.REFRESH_INTERVAL - elapsed, 1)
+    DisplayController.update(statuses, debug_info, time_left)
 
-    -- Run scheduled tasks
+    -- Phase 5: Execute tasks
     TaskScheduler.run()
-    sleep(math.max(config.REFRESH_INTERVAL - elapsed, 0.1))
+
+    -- Phase 6: Precise sleep
+    local remaining_time = math.max(config.REFRESH_INTERVAL - elapsed, 0.1)
+    sleep(remaining_time)
 end
