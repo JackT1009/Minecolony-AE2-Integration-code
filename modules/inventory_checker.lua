@@ -31,9 +31,9 @@ function InventoryChecker:getItemStatus(item, amount)
     
     self:logDebug("Total: "..total.." / Needed: "..amount)
     
-    -- Pattern check (FIXED TYPO HERE)
+    -- Pattern check (CRITICAL FIX HERE)
     local hasPattern = false
-    local craftables = self.bridge.listCraftables() or {}  -- Correct method name
+    local craftables = self.bridge.listCraftables() or {}  -- Corrected method name
     for _, craftable in pairs(craftables) do
         if craftable.name == item then
             hasPattern = true
