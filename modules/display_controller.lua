@@ -1,4 +1,5 @@
-local config = require("config")
+local config = require("modules.config")
+
 local DisplayController = {
     last_lines = {},
     page = 1
@@ -6,8 +7,11 @@ local DisplayController = {
 
 function DisplayController.initialize(monitor)
     DisplayController.mon = monitor
-    monitor.setTextScale(0.5)
-    monitor.setBackgroundColor(colors.black)
+    if monitor then
+        monitor.setTextScale(0.5)
+        monitor.setBackgroundColor(colors.black)
+        monitor.clear()
+    end
 end
 
 function DisplayController.update(statuses, debug_info, time_left)
@@ -16,10 +20,9 @@ function DisplayController.update(statuses, debug_info, time_left)
     local w, h = DisplayController.mon.getSize()
     local lines = {}
 
-    -- Header
-    table.insert(lines, ("Minecolony AE2 [%d/%d] | Refresh: %d "):format(
+    -- Header with timer
+    table.insert(lines, ("Colony Manager [Pg %d] | Refresh: %ds "):format(
         DisplayController.page,
-        math.ceil(#statuses / config.MAX_ITEMS_DISPLAY),
         time_left
     ))
 
@@ -27,7 +30,7 @@ function DisplayController.update(statuses, debug_info, time_left)
     local start_idx = (DisplayController.page - 1) * config.MAX_ITEMS_DISPLAY + 1
     for i = start_idx, math.min(start_idx + config.MAX_ITEMS_DISPLAY - 1, #statuses) do
         local s = statuses[i]
-        table.insert(lines, ("%-15s %s %3d/%3d"):format(
+        table.insert(lines, ("%-18s %s %3d/%3d"):format(
             s.name,
             s.status,
             s.available,
@@ -44,9 +47,12 @@ function DisplayController.update(statuses, debug_info, time_left)
     for y, line in ipairs(lines) do
         if line ~= DisplayController.last_lines[y] then
             DisplayController.mon.setCursorPos(1, y)
-            DisplayController.mon.blit(line, string.rep("f", #line), string.rep("0", #line))
+            DisplayController.mon.clearLine()
+            DisplayController.mon.write(line)
         end
     end
     
     DisplayController.last_lines = lines
 end
+
+return DisplayController
