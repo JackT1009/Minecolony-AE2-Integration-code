@@ -10,15 +10,22 @@ end
 function InventoryChecker:getItemStatus(item, amount)
     if not self.bridge then return "X", 0 end
     
-    -- Get physical item count
+    -- Get ALL items and filter manually
     local total = 0
-    local items = self.bridge.listItems(item) or {}
-    for _, stack in pairs(items) do
-        total = total + (stack.count or 0)
+    local allItems = self.bridge.listItems() or {}
+    
+    for _, stack in pairs(allItems) do
+        -- Exact name match (case-sensitive)
+        if stack.name == item then
+            total = total + (stack.count or 0)
+        end
     end
 
+    -- Debugging (remove after testing)
+    print("Item:", item, "Total:", total, "Needed:", amount)
+
     if total >= amount then
-        return "/", total  -- Fully stocked
+        return "/", total
     else
         -- Check for crafting pattern
         local hasPattern = false
@@ -31,9 +38,9 @@ function InventoryChecker:getItemStatus(item, amount)
         end
 
         if hasPattern then
-            return "M", total  -- Partial stock, pattern exists
+            return "M", total
         else
-            return "P", total  -- Missing pattern
+            return "P", total
         end
     end
 end
