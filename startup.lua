@@ -16,6 +16,9 @@ Display.mon = mon -- Simple assignment
 while true do
     local requests = Colony.getRequests()
     local statuses = inventoryCheck:getAllStatuses(requests)
-    Display.showStatuses(statuses)
+    local debugInfo = inventoryCheck:getDebugLog()
+    
+    Display.showStatuses(statuses, debugInfo)
+    
     sleep(5)
 end
