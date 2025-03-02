@@ -1,4 +1,5 @@
-local config = require("config")
+local config = require("modules.config")
+
 local TaskScheduler = {
     queue = {},
     active_tasks = 0
@@ -18,3 +19,5 @@ function TaskScheduler.run()
         end)
     end
 end
+
+return TaskScheduler
