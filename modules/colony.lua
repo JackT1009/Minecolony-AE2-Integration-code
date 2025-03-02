@@ -8,9 +8,10 @@ function Colony.getRequests()
     for _, req in pairs(integrator.getRequests() or {}) do
         if req.items and req.items[1] then
             local rawName = req.items[1].name
-            local cleanName = rawName:lower():gsub(":.*", "")  -- Remove metadata
+            -- Keep mod prefix but remove metadata
+            local cleanName = rawName:lower():match("^([^:]+:[^:]+)") or rawName
             table.insert(requests, {
-                name = cleanName,
+                name = cleanName,  -- e.g. "thermal:tin_ingot"
                 count = req.count
             })
         end
