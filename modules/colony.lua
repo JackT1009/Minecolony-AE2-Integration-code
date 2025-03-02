@@ -7,7 +7,8 @@ function Colony.getRequests()
     local requests = {}
     for _, req in pairs(integrator.getRequests() or {}) do
         if req.items and req.items[1] then
-            local cleanName = req.items[1].name:lower():gsub(":[^:]+$", "")
+            local rawName = req.items[1].name
+            local cleanName = rawName:lower():gsub(":.*", "")  -- Remove metadata
             table.insert(requests, {
                 name = cleanName,
                 count = req.count
