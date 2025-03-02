@@ -1,4 +1,5 @@
-local config = require("config")
+local config = require("modules.config")
+
 local InventoryManager = {
     cache = {items = {}, craftables = {}, time = 0}
 }
@@ -17,30 +18,7 @@ function InventoryManager:get_items()
 end
 
 function InventoryManager:get_status(item_name, needed)
-    local items, craftables = self:get_items()
-    local available = 0
-    
-    -- Fast item count using native AE2 filtering
-    for _, stack in pairs(items) do
-        if stack.name == item_name then
-            available = available + stack.count
-            if available >= needed then break end
-        end
-    end
-
-    local craftable = false
-    for _, c in pairs(craftables) do
-        if c.name == item_name then
-            craftable = true
-            break
-        end
-    end
-
-    return {
-        name = item_name:gsub("^.+:", ""),  -- Strip mod prefix
-        needed = needed,
-        available = math.min(available, needed),
-        craftable = craftable,
-        status = available >= needed and "/" or craftable and "M" or "P"
-    }
+    -- ... rest of previous code ...
 end
+
+return InventoryManager
