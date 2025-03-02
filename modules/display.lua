@@ -8,36 +8,46 @@ function Display.initialize(monitor)
     end
 end
 
-function Display.show(statuses, debugInfo)
+function Display.show(statuses, debugInfo, timeLeft)
     if not Display.mon then return end
     
     local w, h = Display.mon.getSize()
     Display.mon.clear()
     
-    -- Header
+    -- Header with timer
     Display.mon.setCursorPos(1,1)
     Display.mon.setTextColor(colors.blue)
-    Display.mon.write("ME Bridge Monitor")
+    Display.mon.write(("ME Monitor | Refresh in: %ds "):format(timeLeft))
     
-    -- Status List
+    -- Status List (Longer names)
     local line = 3
     for _, item in ipairs(statuses) do
         if line >= h-5 then break end
         
-        -- Remove mod prefix for display
-        local displayName = item.name:gsub("^[%w_]+:", ""):sub(1, 15)
+        -- Display name (20 chars max)
+        local displayName = item.name:gsub("^[%w_]+:", ""):sub(1, 20)
         
         Display.mon.setCursorPos(1, line)
         Display.mon.setTextColor(colors.white)
-        Display.mon.write(displayName)  -- e.g. "tin_ingot"
+        Display.mon.write(displayName)
         
+        -- Status + Sent indicator
+        local statusText
         local color = colors.red
-        if item.status == "/" then color = colors.green
-        elseif item.status == "M" then color = colors.yellow end
+        if item.status == "/" then
+            color = colors.green
+            statusText = ("/ %d/%d"):format(item.available, item.needed)
+            if item.sent then statusText = statusText .. " (Sent)" end
+        elseif item.status == "M" then
+            color = colors.yellow
+            statusText = ("M %d/%d"):format(item.available, item.needed)
+        else
+            statusText = ("P %d/%d"):format(item.available, item.needed)
+        end
         
         Display.mon.setTextColor(color)
-        Display.mon.setCursorPos(17, line)
-        Display.mon.write(("%s %d/%d"):format(item.status, item.available, item.needed))
+        Display.mon.setCursorPos(22, line)  -- Adjusted for longer names
+        Display.mon.write(statusText)
         line = line + 1
     end
     
