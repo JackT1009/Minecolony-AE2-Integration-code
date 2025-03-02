@@ -1,8 +1,8 @@
 local config = require("modules.config")
 
 local DisplayController = {
-    last_refresh = 0,
-    mon = nil
+    mon = nil,
+    last_refresh = 0
 }
 
 function DisplayController.initialize(monitor)
@@ -11,47 +11,32 @@ function DisplayController.initialize(monitor)
         monitor.setTextScale(0.5)
         monitor.setBackgroundColor(colors.black)
         monitor.clear()
+        monitor.setCursorPos(1,1)
+        monitor.setTextColor(colors.white)
+        monitor.write("Display Initialized")
+        sleep(1)
     end
 end
 
 function DisplayController.update(statuses)
     if not DisplayController.mon then return end
-    local current_tick = os.time() * 20
     
-    -- Update timer every tick
-    local ticks_remaining = config.REFRESH_TICKS - (current_tick % config.REFRESH_TICKS)
-    local seconds_remaining = math.ceil(ticks_remaining / 20)
+    -- Always clear and redraw
+    DisplayController.mon.clear()
     
-    -- Full refresh every second (20 ticks)
-    if current_tick - DisplayController.last_refresh >= 20 then
-        local mon = DisplayController.mon
-        mon.clear()
-        
-        -- Header
-        mon.setTextColor(colors.blue)
-        mon.setCursorPos(1,1)
-        mon.write(("ColonyOS | Refresh: %ds "):format(seconds_remaining))
-        
-        -- Items
-        local line = 3
-        for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
-            local s = statuses[i]
-            mon.setCursorPos(1, line)
-            
-            if s.status == "/" then mon.setTextColor(colors.green)
-            elseif s.status == "M" then mon.setTextColor(colors.yellow)
-            else mon.setTextColor(colors.red) end
-            
-            mon.write(("%-15s %s %3d/%3d"):format(
-                s.name:sub(1,15),
-                s.status,
-                s.available,
-                s.needed
-            ))
-            line = line + 1
+    -- Header
+    DisplayController.mon.setCursorPos(1,1)
+    DisplayController.mon.setTextColor(colors.blue)
+    DisplayController.mon.write("ColonyOS - Working")
+
+    -- Items
+    for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
+        DisplayController.mon.setCursorPos(1, i+2)
+        local s = statuses[i]
+        if s then
+            DisplayController.mon.setTextColor(colors.white)
+            DisplayController.mon.write(("%s: %d/%d"):format(s.name, s.available, s.needed))
         end
-        
-        DisplayController.last_refresh = current_tick
     end
 end
 
