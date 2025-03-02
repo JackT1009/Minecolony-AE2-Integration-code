@@ -1,6 +1,4 @@
-local InventoryChecker = {
-    SAFE_METHODS = {"listItems", "listCraftables", "getCraftables"}
-}
+local InventoryChecker = {}
 
 function InventoryChecker.new(bridge)
     local self = {
@@ -10,38 +8,37 @@ function InventoryChecker.new(bridge)
     return setmetatable(self, {__index = InventoryChecker})
 end
 
-function InventoryChecker:safeCall(method, ...)
-    if not self.bridge[method] then return nil, "No "..method.." method" end
-    return pcall(function() return self.bridge[method](self.bridge, ...) end)
+function InventoryChecker:_log(message)
+    table.insert(self.debug, message)
 end
 
-function InventoryChecker:getStock(itemName)
-    local total = 0
-    local items, err = self:safeCall("listItems")
-    if not items then
-        table.insert(self.debug, "listItems error: "..err)
-        return 0
+function InventoryChecker:_safeCall(fnName, ...)
+    if not self.bridge or not self.bridge[fnName] then
+        self:_log("Missing bridge or method: "..(fnName or "nil"))
+        return nil, "API error"
     end
+    return pcall(self.bridge[fnName], self.bridge, ...)
+end
+
+function InventoryChecker:getStock(itemFilter)
+    local success, items = self:_safeCall("listItems")
+    if not success then return 0 end
     
+    local total = 0
     for _, stack in pairs(items) do
-        if stack.name:lower():gsub(":[^:]+$", "") == itemName then
-            total = total + (tonumber(stack.count) or 0)
+        if stack.name and stack.name:lower() == itemFilter.name:lower() then
+            total = total + (stack.count or 0)
         end
     end
     return total
 end
 
-function InventoryChecker:hasPattern(itemName)
-    local craftables, err
-    craftables, err = self:safeCall("listCraftables") or self:safeCall("getCraftables")
-    
-    if not craftables then
-        table.insert(self.debug, "craftables error: "..err)
-        return false
-    end
+function InventoryChecker:hasCraftingPattern(itemFilter)
+    local success, craftables = self:_safeCall("listCraftableItems")
+    if not success then return false end
     
     for _, craftable in pairs(craftables) do
-        if craftable.name:lower():gsub(":[^:]+$", "") == itemName then
+        if craftable.name and craftable.name:lower() == itemFilter.name:lower() then
             return true
         end
     end
@@ -49,24 +46,27 @@ function InventoryChecker:hasPattern(itemName)
 end
 
 function InventoryChecker:getAllStatuses(requests)
-    local statuses = {}
     self.debug = {}
+    local statuses = {}
     
     for _, req in pairs(requests) do
-        local available = self:getStock(req.name)
-        local hasPattern = self:hasPattern(req.name)
+        local cleanName = req.name:lower():gsub(":.*", "")
+        local itemFilter = {name = cleanName}
+        
+        local available = self:getStock(itemFilter)
+        local canCraft = self:hasCraftingPattern(itemFilter)
         local status = "X"
         
         if available >= req.count then
             status = "/"
-        elseif hasPattern then
+        elseif canCraft then
             status = "M"
         else
             status = "P"
         end
         
         table.insert(statuses, {
-            name = req.name,
+            name = cleanName,
             needed = req.count,
             available = available,
             status = status
