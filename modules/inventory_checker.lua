@@ -3,7 +3,9 @@ local InventoryChecker = {}
 function InventoryChecker.new(bridge)
     local self = {
         bridge = bridge,
-        debug = {}
+        debug = {},
+        cache = nil,
+        cacheTime = 0
     }
     return setmetatable(self, {__index = InventoryChecker})
 end
@@ -27,7 +29,7 @@ function InventoryChecker:getStock(itemFilter)
     local total = 0
     for _, stack in pairs(items) do
         if stack.name and stack.name:lower() == itemFilter.name:lower() then
-            total = total + (stack.count or 0)
+            total = total + (tonumber(stack.count) or 0)
         end
     end
     return total
@@ -46,6 +48,11 @@ function InventoryChecker:hasCraftingPattern(itemFilter)
 end
 
 function InventoryChecker:getAllStatuses(requests)
+    -- Use cached results for 2 seconds
+    if self.cache and (os.time() - self.cacheTime) < 2 then
+        return self.cache, self.debug
+    end
+
     self.debug = {}
     local statuses = {}
     
@@ -70,6 +77,10 @@ function InventoryChecker:getAllStatuses(requests)
             status = status
         })
     end
+
+    -- Update cache
+    self.cache = statuses
+    self.cacheTime = os.time()
     return statuses, self.debug
 end
 
