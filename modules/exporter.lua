@@ -6,7 +6,7 @@ function Exporter.new(bridge, direction)
         direction = direction,
         debug = {}
     }
-    return setmetatable(self, {__index = Exporter})  -- Fixed syntax
+    return setmetatable(self, {__index = Exporter}) -- Fix: Removed extra parenthesis
 end
 
 function Exporter:_log(message)
@@ -29,7 +29,7 @@ function Exporter:pushToWarehouse(itemName, amount)
         self:_log(("Exported %dx %s"):format(exported, itemName))
         return exported
     else
-        self:_log(("Export failed: %s"):format(exported))
+        self:_log(("Export failed: %s"):format(tostring(exported)))
         return 0
     end
 end
