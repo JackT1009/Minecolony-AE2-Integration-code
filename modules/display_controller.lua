@@ -1,8 +1,8 @@
 local config = require("modules.config")
 
 local DisplayController = {
-    mon = nil,
-    last_update = 0
+    last_refresh = 0,
+    mon = nil
 }
 
 function DisplayController.initialize(monitor)
@@ -10,47 +10,48 @@ function DisplayController.initialize(monitor)
     if monitor then
         monitor.setTextScale(0.5)
         monitor.setBackgroundColor(colors.black)
+        monitor.clear()
     end
 end
 
-function DisplayController.force_refresh(statuses, debug_info, time_left)
+function DisplayController.update(statuses)
     if not DisplayController.mon then return end
-    local mon = DisplayController.mon
-    local w, h = mon.getSize()
+    local current_tick = os.time() * 20
     
-    -- Full clear
-    mon.setBackgroundColor(colors.black)
-    mon.clear()
+    -- Update timer every tick
+    local ticks_remaining = config.REFRESH_TICKS - (current_tick % config.REFRESH_TICKS)
+    local seconds_remaining = math.ceil(ticks_remaining / 20)
     
-    -- Header with live timer
-    mon.setTextColor(colors.blue)
-    mon.setCursorPos(1, 1)
-    mon.write(("ColonyOS | Refresh: %ds "):format(time_left))
-
-    -- Status lines
-    local line = 3
-    for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
-        local s = statuses[i]
-        mon.setCursorPos(1, line)
+    -- Full refresh every second (20 ticks)
+    if current_tick - DisplayController.last_refresh >= 20 then
+        local mon = DisplayController.mon
+        mon.clear()
         
-        if s.status == "/" then mon.setTextColor(colors.green)
-        elseif s.status == "M" then mon.setTextColor(colors.yellow)
-        else mon.setTextColor(colors.red) end
-
-        mon.write(("%-15s %s %3d/%3d"):format(
-            s.name:sub(1,15),
-            s.status,
-            s.available,
-            s.needed
-        ))
-        line = line + 1
-    end
-
-    -- Debug footer
-    mon.setTextColor(colors.lightGray)
-    for i = 1, math.min(#debug_info, config.DEBUG_MAX_LINES) do
-        mon.setCursorPos(1, h - config.DEBUG_MAX_LINES + i - 1)
-        mon.write(debug_info[i]:sub(1,w) or "")
+        -- Header
+        mon.setTextColor(colors.blue)
+        mon.setCursorPos(1,1)
+        mon.write(("ColonyOS | Refresh: %ds "):format(seconds_remaining))
+        
+        -- Items
+        local line = 3
+        for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
+            local s = statuses[i]
+            mon.setCursorPos(1, line)
+            
+            if s.status == "/" then mon.setTextColor(colors.green)
+            elseif s.status == "M" then mon.setTextColor(colors.yellow)
+            else mon.setTextColor(colors.red) end
+            
+            mon.write(("%-15s %s %3d/%3d"):format(
+                s.name:sub(1,15),
+                s.status,
+                s.available,
+                s.needed
+            ))
+            line = line + 1
+        end
+        
+        DisplayController.last_refresh = current_tick
     end
 end
 
