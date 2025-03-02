@@ -8,7 +8,8 @@ local files = {
     "startup.lua",
     "modules/colony.lua",
     "modules/display.lua",
-    "modules/inventory_checker.lua",  -- New module
+    "modules/inventory_checker.lua",
+    "modules/exporter.lua",  -- New exporter module
     "Updater.lua"
 }
 
