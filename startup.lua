@@ -5,10 +5,11 @@ local monitor = peripheral.find("monitor") or peripheral.wrap("top")
 local Colony = require("modules/colony")
 local InventoryChecker = require("modules/inventory_checker")
 local Display = require("modules/display")
-local Exporter = require("modules/exporter") -- Case-sensitive!
+local Exporter = require("modules/exporter")
 
--- Configure warehouse direction (ABOVE bridge)
+-- Configure
 local WAREHOUSE_DIRECTION = "up"
+local REFRESH_INTERVAL = 10  -- Seconds
 local exporter = Exporter.new(bridge, WAREHOUSE_DIRECTION)
 
 Display.initialize(monitor)
@@ -16,6 +17,7 @@ local checker = InventoryChecker.new(bridge)
 
 -- Main loop
 while true do
+    local startTime = os.epoch("utc")
     local requests = Colony.getRequests()
     local statuses, debugInfo = checker:getAllStatuses(requests)
     
@@ -37,13 +39,24 @@ while true do
         end
     end
     
-    -- Export logic
+    -- Export logic + track sent items
     for _, item in ipairs(statuses) do
         if item.status == "/" then
-            exporter:pushToWarehouse(item.name, item.needed)
+            local exported = exporter:pushToWarehouse(item.name, item.needed)
+            if exported > 0 then
+                item.sent = true  -- Mark as sent
+                table.insert(debugInfo, "Sent "..exported.."x "..item.name)
+            end
         end
     end
     
-    Display.show(statuses, debugInfo)
-    sleep(10)
+    -- Calculate time left
+    local elapsed = (os.epoch("utc") - startTime) / 1000
+    local timeLeft = math.max(REFRESH_INTERVAL - math.floor(elapsed), 0)
+    
+    -- Update display
+    Display.show(statuses, debugInfo, timeLeft)
+    
+    -- Wait remaining time
+    sleep(REFRESH_INTERVAL - elapsed)
 end
