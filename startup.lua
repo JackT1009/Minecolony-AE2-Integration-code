@@ -7,7 +7,7 @@ local InventoryChecker = require("modules/inventory_checker")
 local Display = require("modules/display")
 local Exporter = require("modules/exporter")
 
--- Configure
+-- Configuration
 local WAREHOUSE_DIRECTION = "up"
 local REFRESH_INTERVAL = 10  -- Seconds
 local exporter = Exporter.new(bridge, WAREHOUSE_DIRECTION)
@@ -15,48 +15,67 @@ local exporter = Exporter.new(bridge, WAREHOUSE_DIRECTION)
 Display.initialize(monitor)
 local checker = InventoryChecker.new(bridge)
 
+-- Performance optimizations
+local lastCraftCheck = {}
+local lastExportCheck = {}
+
 -- Main loop
 while true do
-    local startTime = os.epoch("utc")
+    local timerStart = os.time()
+    local debugInfo = {}
+    
+    -- Phase 1: Get requests
     local requests = Colony.getRequests()
-    local statuses, debugInfo = checker:getAllStatuses(requests)
     
-    -- Auto-craft logic
+    -- Phase 2: Get statuses (cached for 2 cycles)
+    local statuses = checker:getAllStatuses(requests)
+    
+    -- Phase 3: Crafting (optimized)
     for _, item in ipairs(statuses) do
-        if item.status == "M" then
+        if item.status == "M" and not lastCraftCheck[item.name] then
             local amountToCraft = item.needed - item.available
-            local isCrafting = bridge.isItemCrafting({name = item.name})
-            
-            if not isCrafting then
-                local success, err = pcall(bridge.craftItem, {
-                    name = item.name,
-                    count = amountToCraft
-                })
-                table.insert(debugInfo, success and 
-                    "Crafting "..amountToCraft.."x "..item.name or 
-                    "Craft error: "..tostring(err))
+            local success, err = pcall(bridge.craftItem, {
+                name = item.name,
+                count = amountToCraft
+            })
+            if success then
+                table.insert(debugInfo, "Crafting "..amountToCraft.."x "..item.name)
+                lastCraftCheck[item.name] = true  -- Throttle checks
+            else
+                table.insert(debugInfo, "Craft error: "..tostring(err))
             end
         end
     end
     
-    -- Export logic + track sent items
+    -- Phase 4: Exporting (batched)
+    local exportList = {}
     for _, item in ipairs(statuses) do
-        if item.status == "/" then
-            local exported = exporter:pushToWarehouse(item.name, item.needed)
-            if exported > 0 then
-                item.sent = true  -- Mark as sent
-                table.insert(debugInfo, "Sent "..exported.."x "..item.name)
-            end
+        if item.status == "/" and not lastExportCheck[item.name] then
+            table.insert(exportList, item)
+            lastExportCheck[item.name] = true
         end
     end
     
-    -- Calculate time left
-    local elapsed = (os.epoch("utc") - startTime) / 1000
-    local timeLeft = math.max(REFRESH_INTERVAL - math.floor(elapsed), 0)
+    for _, item in ipairs(exportList) do
+        local exported = exporter:pushToWarehouse(item.name, item.needed)
+        if exported > 0 then
+            item.sent = true
+            table.insert(debugInfo, "Sent "..exported.."x "..item.name)
+        end
+    end
     
-    -- Update display
+    -- Phase 5: Calculate time
+    local elapsed = os.time() - timerStart
+    local timeLeft = math.max(REFRESH_INTERVAL - elapsed, 1)  -- Minimum 1s
+    
+    -- Phase 6: Update display
     Display.show(statuses, debugInfo, timeLeft)
     
-    -- Wait remaining time
-    sleep(REFRESH_INTERVAL - elapsed)
+    -- Reset craft/export checks every few cycles
+    if os.time() % 30 == 0 then  -- Reset every 30 seconds
+        lastCraftCheck = {}
+        lastExportCheck = {}
+    end
+    
+    sleep(timeLeft)
 end
