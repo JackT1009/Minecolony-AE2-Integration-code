@@ -12,7 +12,7 @@ DisplayController.initialize(monitor)
 
 -- Main loop
 while true do
-    local cycle_start = os.time()
+    local cycle_start = os.epoch("utc")
     local debug_info = {}
     local requests = Colony.getRequests()
     local statuses = {}
@@ -33,7 +33,7 @@ while true do
     end
 
     -- Update display
-    local elapsed = os.time() - cycle_start
+    local elapsed = (os.epoch("utc") - cycle_start) / 1000
     DisplayController.update(
         statuses,
         debug_info,
