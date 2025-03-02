@@ -2,7 +2,10 @@ local Display = {}
 
 function Display.initialize(monitor)
     Display.mon = monitor
-    if monitor then monitor.setTextScale(0.5) end
+    if monitor then 
+        monitor.setTextScale(0.5)
+        monitor.setBackgroundColor(colors.black)
+    end
 end
 
 function Display.show(statuses, debugInfo)
@@ -14,12 +17,12 @@ function Display.show(statuses, debugInfo)
     -- Header
     Display.mon.setCursorPos(1,1)
     Display.mon.setTextColor(colors.blue)
-    Display.mon.write("Colony Stock System")
+    Display.mon.write("ME Bridge Monitor")
     
-    -- Statuses
+    -- Status List
     local line = 3
     for _, item in ipairs(statuses) do
-        if line >= h-2 then break end
+        if line >= h-5 then break end
         
         Display.mon.setCursorPos(1, line)
         Display.mon.setTextColor(colors.white)
@@ -35,10 +38,9 @@ function Display.show(statuses, debugInfo)
         line = line + 1
     end
     
-    -- Debug Footer
+    -- Debug Info
     Display.mon.setTextColor(colors.lightGray)
-    for i, msg in ipairs(debugInfo) do
-        if (h - #debugInfo + i - 1) >= h then break end
+    for i, msg in ipairs(debugInfo or {}) do
         Display.mon.setCursorPos(1, h - #debugInfo + i - 1)
         Display.mon.write(msg:sub(1,w))
     end
