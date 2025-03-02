@@ -6,10 +6,11 @@ local MAX_RETRIES = 3
 
 local files = {
     "startup.lua",
+    "modules/config.lua",
     "modules/colony.lua",
-    "modules/display.lua",
-    "modules/inventory_checker.lua",
-    "modules/exporter.lua",  -- New exporter module
+    "modules/inventory_manager.lua",
+    "modules/display_controller.lua",
+    "modules/task_scheduler.lua",
     "Updater.lua"
 }
 
