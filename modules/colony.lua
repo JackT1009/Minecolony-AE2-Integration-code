@@ -8,7 +8,7 @@ function Colony.getRequests()
     for _, req in pairs(integrator.getRequests() or {}) do
         if req.items and req.items[1] then
             requests[#requests+1] = {
-                name = req.items[1].name:lower():gsub(":.*", ""),  -- Clean name
+                name = req.items[1].name,
                 count = req.count
             }
         end
