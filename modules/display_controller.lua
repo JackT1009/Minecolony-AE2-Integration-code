@@ -1,33 +1,31 @@
 local config = require("modules.config")
 
 local DisplayController = {
-    last_content = {},
-    page = 1
+    mon = nil,
+    last_update = 0
 }
 
-function DisplayController.initialize(mon)
-    DisplayController.mon = mon
-    if not mon then return end
-    
-    mon.setTextScale(0.5)
-    mon.setBackgroundColor(colors.black)
-    mon.clear()
-    mon.setCursorPos(1,1)
+function DisplayController.initialize(monitor)
+    DisplayController.mon = monitor
+    if monitor then
+        monitor.setTextScale(0.5)
+        monitor.setBackgroundColor(colors.black)
+    end
 end
 
-function DisplayController.update(statuses, debug_info, time_left)
+function DisplayController.force_refresh(statuses, debug_info, time_left)
     if not DisplayController.mon then return end
     local mon = DisplayController.mon
     local w, h = mon.getSize()
     
-    -- Clear screen properly
+    -- Full clear
     mon.setBackgroundColor(colors.black)
     mon.clear()
-
-    -- Header
+    
+    -- Header with live timer
     mon.setTextColor(colors.blue)
-    mon.setCursorPos(1,1)
-    mon.write(("Colony Manager v2.1 | Refresh: %ds "):format(math.floor(time_left)))
+    mon.setCursorPos(1, 1)
+    mon.write(("ColonyOS | Refresh: %ds "):format(time_left))
 
     -- Status lines
     local line = 3
@@ -35,16 +33,12 @@ function DisplayController.update(statuses, debug_info, time_left)
         local s = statuses[i]
         mon.setCursorPos(1, line)
         
-        if s.status == "/" then
-            mon.setTextColor(colors.green)
-        elseif s.status == "M" then
-            mon.setTextColor(colors.yellow)
-        else
-            mon.setTextColor(colors.red)
-        end
+        if s.status == "/" then mon.setTextColor(colors.green)
+        elseif s.status == "M" then mon.setTextColor(colors.yellow)
+        else mon.setTextColor(colors.red) end
 
-        mon.write(("%-18s %s %3d/%3d"):format(
-            s.name:sub(1,18),
+        mon.write(("%-15s %s %3d/%3d"):format(
+            s.name:sub(1,15),
             s.status,
             s.available,
             s.needed
@@ -56,7 +50,7 @@ function DisplayController.update(statuses, debug_info, time_left)
     mon.setTextColor(colors.lightGray)
     for i = 1, math.min(#debug_info, config.DEBUG_MAX_LINES) do
         mon.setCursorPos(1, h - config.DEBUG_MAX_LINES + i - 1)
-        mon.write(debug_info[i]:sub(1,w))
+        mon.write(debug_info[i]:sub(1,w) or "")
     end
 end
 
