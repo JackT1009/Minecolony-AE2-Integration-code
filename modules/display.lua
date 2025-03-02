@@ -24,9 +24,12 @@ function Display.show(statuses, debugInfo)
     for _, item in ipairs(statuses) do
         if line >= h-5 then break end
         
+        -- Remove mod prefix for display
+        local displayName = item.name:gsub("^[%w_]+:", ""):sub(1, 15)
+        
         Display.mon.setCursorPos(1, line)
         Display.mon.setTextColor(colors.white)
-        Display.mon.write(item.name:sub(1,15))
+        Display.mon.write(displayName)  -- e.g. "tin_ingot"
         
         local color = colors.red
         if item.status == "/" then color = colors.green
