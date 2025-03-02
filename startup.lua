@@ -6,11 +6,11 @@ local mon = peripheral.find("monitor") or peripheral.wrap("right")
 -- Load Modules
 local Colony = require("modules/colony")
 local InventoryChecker = require("modules/inventory_checker")
-local Display = require("modules/display")  -- Load LAST
+local Display = require("modules/display") -- Must load LAST
 
 -- Initialize Systems
 local inventoryCheck = InventoryChecker.new(bridge)
-Display.mon = mon  -- Simple assignment
+Display.mon = mon -- Simple assignment
 
 -- Main Loop
 while true do
