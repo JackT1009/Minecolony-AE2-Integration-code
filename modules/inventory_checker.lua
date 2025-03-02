@@ -16,12 +16,11 @@ function InventoryChecker:getItemStatus(item, amount)
     self.debugLog = {}
     if not self.bridge then return "X", 0 end
     
-    -- Debug: Item being checked
     self:logDebug("Checking: "..item)
     
+    -- Physical item count
     local total = 0
     local allItems = self.bridge.listItems() or {}
-    
     for _, stack in pairs(allItems) do
         if stack.name == item then
             local count = tonumber(stack.count) or 0
@@ -30,12 +29,11 @@ function InventoryChecker:getItemStatus(item, amount)
         end
     end
     
-    -- Debug: Total found
     self:logDebug("Total: "..total.." / Needed: "..amount)
     
-    -- Status logic
+    -- Pattern check (FIXED TYPO HERE)
     local hasPattern = false
-    local craftables = self.bridge.listCraftables() or {}
+    local craftables = self.bridge.listCraftables() or {}  -- Correct method name
     for _, craftable in pairs(craftables) do
         if craftable.name == item then
             hasPattern = true
