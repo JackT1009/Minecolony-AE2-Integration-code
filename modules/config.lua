@@ -1,4 +1,3 @@
--- modules/config.lua
 return {
     WAREHOUSE_DIRECTION = "up",
     REFRESH_INTERVAL = 7,
