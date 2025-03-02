@@ -1,24 +1,17 @@
--- Main Program
-local col = peripheral.find("colonyIntegrator")
-local bridge = peripheral.find("meBridge")
-local mon = peripheral.find("monitor") or peripheral.wrap("right")
+local bridge = peripheral.find("meBridge") or peripheral.find("rsBridge")
+local monitor = peripheral.find("monitor") or peripheral.wrap("top")
 
--- Load Modules
 local Colony = require("modules/colony")
 local InventoryChecker = require("modules/inventory_checker")
 local Display = require("modules/display")
 
--- Initialize Systems
-local inventoryCheck = InventoryChecker.new(bridge)
-Display.mon = mon
+Display.initialize(monitor)
 
--- Main Loop
+local checker = InventoryChecker.new(bridge)
+
 while true do
     local requests = Colony.getRequests()
-    local statuses = inventoryCheck:getAllStatuses(requests)
-    local debugInfo = inventoryCheck:getDebugLog()
-    
-    Display.showStatuses(statuses, debugInfo)
-    
-    sleep(5)
+    local statuses, debugInfo = checker:getAllStatuses(requests)
+    Display.show(statuses, debugInfo)
+    sleep(10)
 end
