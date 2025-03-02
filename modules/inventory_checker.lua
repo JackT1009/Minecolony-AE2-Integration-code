@@ -50,9 +50,7 @@ function InventoryChecker:getAllStatuses(requests)
     local statuses = {}
     
     for _, req in pairs(requests) do
-        local cleanName = req.name:lower():gsub(":.*", "")
-        local itemFilter = {name = cleanName}
-        
+        local itemFilter = {name = req.name}
         local available = self:getStock(itemFilter)
         local canCraft = self:hasCraftingPattern(itemFilter)
         local status = "X"
@@ -66,7 +64,7 @@ function InventoryChecker:getAllStatuses(requests)
         end
         
         table.insert(statuses, {
-            name = cleanName,
+            name = req.name,
             needed = req.count,
             available = available,
             status = status
