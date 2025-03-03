@@ -1,37 +1,39 @@
+-- inventory_manager.lua
 local config = require("modules.config")
 
 local InventoryManager = {
     last_update = 0,
-    cached_items = {},
-    cached_craftables = {}
+    item_counts = {},
+    craftable_items = {}
 }
 
 function InventoryManager.new(bridge)
     return setmetatable({bridge = bridge}, {__index = InventoryManager})
 end
 
-function InventoryManager:refresh_cache()
+function InventoryManager:refresh()
     if os.time() - self.last_update >= config.REFRESH_INTERVAL then
-        self.cached_items = self.bridge.listItems() or {}
-        self.cached_craftables = self.bridge.listCraftableItems() or {}
+        -- Refresh item cache
+        local items = self.bridge.listItems() or {}
+        self.item_counts = {}
+        for _, stack in pairs(items) do
+            self.item_counts[stack.name] = (self.item_counts[stack.name] or 0) + stack.count
+        end
+        
+        -- Refresh craftables cache
+        local craftables = self.bridge.listCraftableItems() or {}
+        self.craftable_items = {}
+        for _, craft in pairs(craftables) do
+            self.craftable_items[craft.name] = true
+        end
+        
         self.last_update = os.time()
     end
 end
 
 function InventoryManager:get_status(item_name, needed)
-    self:refresh_cache()
-    
-    local available = 0
-    for _, stack in pairs(self.cached_items) do
-        if stack.name == item_name then
-            available = available + (stack.count or 0)
-        end
-    end
-
-    local craftable = false
-    for _, craft in pairs(self.cached_craftables) do
-        if craft.name == item_name then craftable = true break end
-    end
+    local available = self.item_counts[item_name] or 0
+    local craftable = self.craftable_items[item_name] or false
 
     return {
         name = item_name:gsub("^.+:", ""),
