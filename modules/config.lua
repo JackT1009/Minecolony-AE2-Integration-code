@@ -1,10 +1,14 @@
+-- config.lua
 return {
-    REFRESH_INTERVAL = 5,       -- Full refresh every 5 seconds
-    WAREHOUSE_DIRECTION = "up",
-    MAX_ITEMS_DISPLAY = 12,
-    STATUS_COLORS = {
-        stocked = colors.green,
-        craftable = colors.yellow,
-        missing = colors.red
+    REFRESH = 5,            -- Seconds between full refreshes
+    DIRECTION = "up",       -- Warehouse side
+    MAX_ROWS = 12,          -- Display capacity
+    
+    -- Precomputed CC color values
+    COLORS = {
+        stocked = 16384,    -- green
+        craftable = 128,    -- yellow
+        missing = 32768,    -- red
+        header = 256        -- blue
     }
 }
