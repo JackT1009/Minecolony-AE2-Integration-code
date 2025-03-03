@@ -1,5 +1,5 @@
-local config = require("modules.config") or error("Missing config!")
-assert(config.REFRESH, "REFRESH missing in config")
+local config = require("modules.config") or error("Failed to load config module")
+local REFRESH_INTERVAL = config.REFRESH or error("Missing REFRESH in config")
 
 local InventoryManager = {
     last_update = 0,
@@ -12,7 +12,7 @@ function InventoryManager.new(bridge)
 end
 
 function InventoryManager:refresh()
-    if os.time() - self.last_update >= config.REFRESH then
+    if os.time() - self.last_update >= REFRESH_INTERVAL then
         -- Refresh item cache
         local items = self.bridge.listItems() or {}
         self.item_counts = {}
