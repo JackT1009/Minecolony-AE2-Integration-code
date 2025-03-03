@@ -1,4 +1,4 @@
-local config = require("modules.config") or error("Missing config!")
+local config = require("modules.config")
 
 local DisplayController = {
     mon = nil,
@@ -9,56 +9,55 @@ local DisplayController = {
 function DisplayController.initialize(monitor)
     DisplayController.mon = monitor
     if monitor then
-        monitor.setTextScale(0.5)
+        monitor.setTextScale(0.4)  -- Smaller scale for more text
         monitor.setBackgroundColor(colors.black)
         monitor.clear()
     end
 end
 
-local function same_status(a, b)
-    return a and b and a.name == b.name and a.available == b.available and a.needed == b.needed and a.status == b.status
+local function calculate_layout()
+    local mon = DisplayController.mon
+    local w, h = mon.getSize()
+    return {
+        name_width = math.floor(w * 0.6),
+        count_width = math.floor(w * 0.4) - 3
+    }
 end
 
 function DisplayController.update(statuses)
     if not DisplayController.mon then return end
     local mon = DisplayController.mon
+    local layout = calculate_layout()
     
     -- Full refresh handling
-    local full_refresh = false
     if os.time() - DisplayController.last_full_refresh >= config.REFRESH then
         mon.clear()
         DisplayController.last_full_refresh = os.time()
-        full_refresh = true
         DisplayController.previous_statuses = {}
     end
 
-    -- Update header
+    -- Header with dynamic sizing
     mon.setCursorPos(1, 1)
-    mon.setTextColor(config.COLORS.header)
-    mon.write(("Colony Monitor [%02ds]"):format(
+    mon.setTextColor(config.STATUS_COLORS.header)
+    mon.write(("Colony Monitor [%ds]"):format(
         config.REFRESH - (os.time() - DisplayController.last_full_refresh)
     ))
 
-    -- Update status lines
+    -- Status lines with dynamic formatting
     local line = 3
-    for i = 1, math.min(#statuses, config.MAX_ROWS) do
-        local s = statuses[i]
-        local prev = DisplayController.previous_statuses[i]
+    for i, s in ipairs(statuses) do
+        local fmt = string.format("%%-%ds %%3d/%%3d", layout.name_width)
+        local text = fmt:format(
+            s.name:sub(1, layout.name_width),
+            math.min(s.available, s.needed),
+            s.needed
+        )
         
-        if full_refresh or not same_status(prev, s) then
+        if text ~= DisplayController.previous_statuses[i] then
             mon.setCursorPos(1, line)
-            mon.setTextColor(config.COLORS[s.status])
-            mon.write(("%-15s %3d/%3d"):format(
-                s.name:sub(1,15),
-                math.min(s.available, s.needed),
-                s.needed
-            ))
-            DisplayController.previous_statuses[i] = {
-                name = s.name,
-                available = s.available,
-                needed = s.needed,
-                status = s.status
-            }
+            mon.setTextColor(config.STATUS_COLORS[s.status])
+            mon.write(text)
+            DisplayController.previous_statuses[i] = text
         end
         line = line + 1
     end
