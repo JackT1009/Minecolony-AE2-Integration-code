@@ -1,5 +1,4 @@
-local config = require("modules.config") or error("Failed to load config module")
-local REFRESH_INTERVAL = config.REFRESH or error("Missing REFRESH in config")
+local config = require("modules.config")
 
 local InventoryManager = {
     last_update = 0,
@@ -12,19 +11,19 @@ function InventoryManager.new(bridge)
 end
 
 function InventoryManager:refresh()
-    if os.time() - self.last_update >= REFRESH_INTERVAL then
-        -- Refresh item cache
-        local items = self.bridge.listItems() or {}
+    if os.time() - self.last_update >= config.REFRESH then
+        -- AE2-specific inventory listing
         self.item_counts = {}
+        local items = self.bridge.listItems() or {}
         for _, stack in pairs(items) do
-            self.item_counts[stack.name] = (self.item_counts[stack.name] or 0) + stack.count
+            self.item_counts[stack.fingerprint] = stack.amount
         end
         
-        -- Refresh craftables cache
-        local craftables = self.bridge.listCraftableItems() or {}
+        -- AE2 craftable detection
         self.craftable_items = {}
+        local craftables = self.bridge.listCraftables() or {}
         for _, craft in pairs(craftables) do
-            self.craftable_items[craft.name] = true
+            self.craftable_items[craft.fingerprint] = true
         end
         
         self.last_update = os.time()
@@ -36,7 +35,7 @@ function InventoryManager:get_status(item_name, needed)
     local craftable = self.craftable_items[item_name] or false
 
     return {
-        name = item_name:gsub("^.+:", ""),
+        name = item_name:gsub("^ae2:", ""):gsub("_", " "):gsub("(%l)(%w*)", function(a,b) return a:upper()..b end),
         available = available,
         needed = needed,
         status = available >= needed and "stocked" or craftable and "craftable" or "missing"
