@@ -19,7 +19,7 @@ function InventoryManager:refresh()
             self.item_counts[stack.name] = (self.item_counts[stack.name] or 0) + stack.count
         end
         
-        -- Refresh craftables using AE2's listCraftableItems()
+        -- CORRECTED METHOD NAME: listCraftableItems()
         self.craftable_items = {}
         local craftables = self.bridge.listCraftableItems() or {}
         for _, craft in pairs(craftables) do
