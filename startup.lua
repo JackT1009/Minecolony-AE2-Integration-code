@@ -1,4 +1,3 @@
--- startup.lua
 local config = require("modules.config")
 local Colony = require("modules.colony")
 local InventoryManager = require("modules.inventory_manager")
@@ -33,7 +32,7 @@ while true do
         if s.status == "stocked" then
             TaskScheduler.add({
                 fn = function()
-                    pcall(bridge.exportItem, {name=s.name, count=s.needed}, config.WAREHOUSE_DIRECTION)
+                    pcall(bridge.exportItem, {name=s.name, count=s.needed}, config.DIRECTION)
                 end,
                 args = {}
             })
