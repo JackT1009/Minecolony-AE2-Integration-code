@@ -1,7 +1,10 @@
 return {
+    REFRESH_INTERVAL = 5,       -- Full refresh every 5 seconds
     WAREHOUSE_DIRECTION = "up",
-    REFRESH_TICKS = 20 * 5,  -- 5 seconds (20 ticks/sec)
-    CACHE_TICKS = 20 * 2,    -- 2 seconds
-    DEBUG_MAX_LINES = 3,
-    MAX_ITEMS_DISPLAY = 12
+    MAX_ITEMS_DISPLAY = 12,
+    STATUS_COLORS = {
+        stocked = colors.green,
+        craftable = colors.yellow,
+        missing = colors.red
+    }
 }
