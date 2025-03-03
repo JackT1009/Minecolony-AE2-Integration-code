@@ -1,11 +1,11 @@
 return {
-    REFRESH = 5,  -- Must exist and be a number
-    DIRECTION = "up",
-    MAX_ROWS = 12,
-    COLORS = {
-        stocked = 16384,
-        craftable = 128,
-        missing = 32768,
-        header = 256
+    REFRESH = 5,            -- Full refresh interval
+    DIRECTION = "up",       -- Warehouse direction
+    MAX_WIDTH = 30,         -- Max characters per line
+    STATUS_COLORS = {
+        stocked = colors.green,
+        craftable = colors.yellow,
+        missing = colors.red,
+        header = colors.blue
     }
 }
