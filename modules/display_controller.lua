@@ -1,5 +1,4 @@
--- display_controller.lua
-local config = require("modules.config")
+local config = require("modules.config") or error("Missing config!")
 
 local DisplayController = {
     mon = nil,
@@ -23,11 +22,10 @@ end
 function DisplayController.update(statuses)
     if not DisplayController.mon then return end
     local mon = DisplayController.mon
-    local w, h = mon.getSize()
     
     -- Full refresh handling
     local full_refresh = false
-    if os.time() - DisplayController.last_full_refresh >= config.REFRESH_INTERVAL then
+    if os.time() - DisplayController.last_full_refresh >= config.REFRESH then
         mon.clear()
         DisplayController.last_full_refresh = os.time()
         full_refresh = true
@@ -36,20 +34,20 @@ function DisplayController.update(statuses)
 
     -- Update header
     mon.setCursorPos(1, 1)
-    mon.setTextColor(colors.blue)
+    mon.setTextColor(config.COLORS.header)
     mon.write(("Colony Monitor [%02ds]"):format(
-        config.REFRESH_INTERVAL - (os.time() - DisplayController.last_full_refresh)
+        config.REFRESH - (os.time() - DisplayController.last_full_refresh)
     ))
 
     -- Update status lines
     local line = 3
-    for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
+    for i = 1, math.min(#statuses, config.MAX_ROWS) do
         local s = statuses[i]
         local prev = DisplayController.previous_statuses[i]
         
         if full_refresh or not same_status(prev, s) then
             mon.setCursorPos(1, line)
-            mon.setTextColor(config.STATUS_COLORS[s.status])
+            mon.setTextColor(config.COLORS[s.status])
             mon.write(("%-15s %3d/%3d"):format(
                 s.name:sub(1,15),
                 math.min(s.available, s.needed),
