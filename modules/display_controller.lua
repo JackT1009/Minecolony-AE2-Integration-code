@@ -2,7 +2,7 @@ local config = require("modules.config")
 
 local DisplayController = {
     mon = nil,
-    last_refresh = 0
+    last_full_refresh = 0
 }
 
 function DisplayController.initialize(monitor)
@@ -11,32 +11,39 @@ function DisplayController.initialize(monitor)
         monitor.setTextScale(0.5)
         monitor.setBackgroundColor(colors.black)
         monitor.clear()
-        monitor.setCursorPos(1,1)
-        monitor.setTextColor(colors.white)
-        monitor.write("Display Initialized")
-        sleep(1)
     end
 end
 
 function DisplayController.update(statuses)
     if not DisplayController.mon then return end
+    local mon = DisplayController.mon
+    local w, h = mon.getSize()
     
-    -- Always clear and redraw
-    DisplayController.mon.clear()
-    
-    -- Header
-    DisplayController.mon.setCursorPos(1,1)
-    DisplayController.mon.setTextColor(colors.blue)
-    DisplayController.mon.write("ColonyOS - Working")
+    -- Full refresh every 5 seconds
+    if os.time() - DisplayController.last_full_refresh >= config.REFRESH_INTERVAL then
+        mon.clear()
+        DisplayController.last_full_refresh = os.time()
+    end
 
-    -- Items
+    -- Header with countdown
+    mon.setCursorPos(1,1)
+    mon.setTextColor(colors.blue)
+    mon.write(("Colony Monitor [%ds]"):format(
+        config.REFRESH_INTERVAL - (os.time() - DisplayController.last_full_refresh)
+    ))
+
+    -- Status lines
+    local line = 3
     for i = 1, math.min(#statuses, config.MAX_ITEMS_DISPLAY) do
-        DisplayController.mon.setCursorPos(1, i+2)
         local s = statuses[i]
-        if s then
-            DisplayController.mon.setTextColor(colors.white)
-            DisplayController.mon.write(("%s: %d/%d"):format(s.name, s.available, s.needed))
-        end
+        mon.setCursorPos(1, line)
+        mon.setTextColor(config.STATUS_COLORS[s.status])
+        mon.write(("%-15s %3d/%3d"):format(
+            s.name:sub(1,15),
+            math.min(s.available, s.needed),
+            s.needed
+        ))
+        line = line + 1
     end
 end
 
