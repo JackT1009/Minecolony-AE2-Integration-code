@@ -1,4 +1,3 @@
--- config.lua
 return {
     REFRESH = 5,            -- Seconds between full refreshes
     DIRECTION = "up",       -- Warehouse side
